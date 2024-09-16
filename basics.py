@@ -18,7 +18,7 @@ def add_calc(sym) :
 def eval_calc() :
     global calculation
     try :
-        calculation = str(eval(calculation))
+        # calculation = str(evaluate(calculation))
         text_result.delete(1.0, "end")
         text_result.insert(1.0, calculation)
     # eval technically a security issue. also runs py code
@@ -33,13 +33,42 @@ def clear_field() :
     calculation = ""
     text_result.delete(1.0, "end")
 
+def pemdas() :
+    global calculation
+    containsEq = 1
+    while containsEq == 1 :
+        if (calculation.contains("(")) :
+            parenth()
+        elif (calculation.contains("*") or calculation.contains("/")) :
+            mult()
+        elif (calculation.contains("+") or calculation.contains("-")) :
+            add()
+        else :
+            containsEq = 0
+
+# method for handling parentheses 
+def parenth() :
+    global calculation
+
+# method for handling * and /
+def mult() :
+    global calculation
+
+# method for handling + and -
+def add() :
+    global calculation
+
+# creating the interface
 root = tk.Tk()
 
+# sizing the panel
 root.geometry("300x275")
 
+# appearance specifications
 text_result = tk.Text(root, height=2, width=16, font=("Arial", 24))
 text_result.grid(columnspan = 5)
 
+# making a LOT of buttons
 btn_1 = tk.Button(root, text="1", command=lambda: add_calc(1), width=5, font=("Arial", 14))
 btn_1.grid(row=2, column=1)
 
@@ -97,4 +126,6 @@ btn_neg.grid(row=6, column=2)
 btn_neg = tk.Button(root, text=".", command=lambda: add_calc("."), width=5, font=("Arial", 14))
 btn_neg.grid(row=5, column=1)
 
+# making sure the calculator does not end
+# until the user exits
 root.mainloop()
