@@ -12,6 +12,8 @@ window = pg.display.set_mode((width, height))
 pg.display.set_caption("Game Tester")
 
 
+# now we get to add a background image.
+
 # to keep the game running for as long as the
 # character is alive, we need a while-loop
 # For the sake of testing, the while loop will work
