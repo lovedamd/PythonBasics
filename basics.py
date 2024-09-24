@@ -33,26 +33,29 @@ def clear_field() :
     calculation = ""
     text_result.delete(1.0, "end")
 
-def pemdas() :
-    global calculation
-    containsEq = 1
-    while containsEq == 1 :
-        if (calculation.contains("(")) :
+def pemdas(equation) :
+    containsEq = 0
+    while containsEq == 0 :
+        if (equation.contains("(")) :
             parenth()
-        elif (calculation.contains("*") or calculation.contains("/")) :
+        elif (equation.contains("*") or equation.contains("/")) :
             mult()
-        elif (calculation.contains("+") or calculation.contains("-")) :
+        elif (equation.contains("+") or equation.contains("-")) :
             add()
         else :
-            containsEq = 0
+            containsEq = 1
 
 # method for handling parentheses 
 def parenth() :
     global calculation
+    equation = calculation[calculation.find("("), calculation.find(")")]
+    pemdas(equation)
+
 
 # method for handling * and /
 def mult() :
     global calculation
+
 
 # method for handling + and -
 def add() :
