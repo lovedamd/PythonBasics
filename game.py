@@ -49,8 +49,9 @@ tract = pg.image.load("tractor.png")
 # making the white in the tractor transparent, 
 # so the background does not exist
 tract.set_colorkey((255,255,255))
-tract_width = 40
-tract_height = 40
+tract_width = 60
+tract_height = 60
+tract = pg.transform.scale(tract, (tract_width, tract_height))
 
 def draw(player) :
     # setting the image, and then 
@@ -63,7 +64,7 @@ def draw(player) :
     # use this to draw the player image
     # colors can be given in string, 
     # since python was updated recently
-    pg.draw.rect(window, "yellow", player)
+    window.blit(tract, (player.x, player.y))
 
 
     pg.display.update()
