@@ -1,135 +1,168 @@
 import pygame as pg
 import time as t
-import random as ran
-
-
-# the time thing may have been confusing
-# but we imported it for a reason
-# Since some computers have a lot
-# more hertz per second than others
-# time is not regulated equally across
-# all systems. So we use the time lib
-# to regulate the timing of our game and
-# keep things at a simple pace (was way too fast!!)
+import random as rand
+pg.font.init()
 
 # all of the imports and such
 
 # now, making a window
 width, height = 600, 600
-# setting it so that the window will be displayed
 window = pg.display.set_mode((width, height))
-# setting the name of the window
 pg.display.set_caption("Game Tester")
 
-
-# making an easy constant variable
-# for the player object's velocity
+# making constant variables for velocities
 playerVel = 5
+moo_vel = 3
+shot_vel = 3
 
-# now we get to add a background image.
-BG = pg.image.load("background.jpg")
-# since my image was taken from my phone
-# i needed to not only change the size
-# but also rotate it
-# fortunately, it was easy enough to do, 
-# since pygame has those methods available
+# dimensions for the cows and shots
+cow_height = 40
+cow_width = 40
+shot_h = 15
+shot_w = 10
+
+# loading the images
+cow = pg.image.load("goodyCow.jpg")
+cow = pg.transform.scale(cow, (cow_width, cow_height))
+
+BG = pg.image.load("goodGrass.jpg")
 BG = pg.transform.scale(BG, (width, height))
 
-# you can also call the scale method as this:
-# BG = pg.transform.scale(pg.image.load("background.jpg"), 
-#   (width, height))
-BG = pg.transform.rotate(BG, -90)
-
-
-# now we finally get to make our character.
-# I want to make it a tractor, so I'm going
-# to take some time to make a pixellated
-# tractor image.
-tract = pg.image.load("tractor.png")
-# making the white in the tractor transparent, 
-# so the background does not exist
-tract.set_colorkey((255,255,255))
+tract = pg.image.load("goodTract.jpg")
+tract.set_colorkey((255, 255, 255))
 tract_width = 60
 tract_height = 60
 tract = pg.transform.scale(tract, (tract_width, tract_height))
 
-def draw(player) :
-    # setting the image, and then 
-    # the two different numbers set the
-    # sizing of the image. The 0, 0
-    # means that it will fill the full
-    # size of the window.
-    window.blit(BG, (0, 0))
+# initializing the font
+font = pg.font.SysFont("comic-sans", 30)
 
-    # use this to draw the player image
-    # colors can be given in string, 
-    # since python was updated recently
+# making a boolean to keep track of when the tractor gets hit
+global hit
+hit = False
+
+# draw function remains unchanged
+def draw(player, elapsed_time, cowz, shots):
+    window.blit(BG, (0, 0))
+    t_text = font.render(f"Time: {round(elapsed_time)}s", 1, "white")
+    window.blit(t_text, (10, 10))
     window.blit(tract, (player.x, player.y))
 
+    # drawing cows and shots
+    for moo in cowz:
+        window.blit(cow, (moo.x, moo.y))
+    for shot in shots:
+        pg.draw.rect(window, "black", shot)
 
     pg.display.update()
-    # Now we update the window.
+
+def cowChecker(cowz, player, shots):
+    global hit
+    cows_to_remove = []
+    shots_to_remove = []
+
+    for moo in cowz:
+        moo.y += moo_vel  # Move the cow down the screen
+
+        if moo.y > height:  # Remove cows that go off the screen
+            cows_to_remove.append(moo)
+        elif moo.colliderect(player):  # Player hit by cow
+            cows_to_remove.append(moo)
+            hit = True
+
+        # Move the cow closer to the player's x position
+        if player.x < moo.x:
+            moo.x -= moo_vel
+        elif player.x > moo.x:
+            moo.x += moo_vel
+
+        # Check if a shot hit a cow
+        for shot in shots:
+            if shot.colliderect(moo):
+                cows_to_remove.append(moo)
+                shots_to_remove.append(shot)
+
+    # Remove cows and shots after iteration to avoid modifying lists during iteration
+    for moo in cows_to_remove:
+        if moo in cowz:
+            cowz.remove(moo)
+
+    for shot in shots_to_remove:
+        if shot in shots:
+            shots.remove(shot)
+
+# UPDATED spawnShot to correctly place bullets
+def spawnShot(player, shots):
+    shot_x = player.x + player.width // 2 - shot_w // 2
+    shot_y = player.y  # Correct bullet position to player's y
+    shot = pg.Rect(shot_x, shot_y, shot_w, shot_h)
+    shots.append(shot)
+
+def shotChecker(shots):
+    for shot in shots[:]:  # Copy the list to avoid modification issues
+        shot.y -= shot_vel  # Move the shot upwards
+        if shot.y < 0:  # Remove the shot if it goes off the top of the screen
+            shots.remove(shot)
 
 
-
-# to keep the game running for as long as the
-# character is alive, we need a while-loop
-# For the sake of testing, the while loop will work
-# while there have not been any collisions, etc.
-def main() : 
-    # subtracting the tractheight from height
-    # gives it a position at the bottom of the 
-    # screen to start with
-    player = pg.Rect((300, height - tract_height, tract_width, tract_height))
-    # parameters = X position, Y position, width, height
-
-
-    # make a clock outside of the while loop
-    # that way we can control the speed of the
-    # loop and make it easier to move the 
-    # character
+# main loop
+def main():
+    player = pg.Rect(300, height - tract_height, tract_width, tract_height)
+    start_time = t.time()
+    elapsed_time = 0
     clock = pg.time.Clock()
-
-    # using the run variable, we can change it to 
-    # false whenever the character dies
+    
+    cow_add_inc = 2000
+    cow_count = 0
+    cowz = []
+    shots = []
     run = True
+
     while run:
+        cow_count += clock.tick(60)
+        if cow_count > cow_add_inc:
+            for _ in range(3):
+                cow_x = rand.randint(-width, width)
+                moo = pg.Rect(cow_x, -cow_height, cow_width, cow_height)
+                cowz.append(moo)
+            cow_add_inc = max(200, cow_add_inc - 50)
+            cow_count = 0
 
-        clock.tick(60)
-
-        # this keeps track of all events that
-        # have occurred thus far??
-        # NEW INFO. Keeps track of user input
-        # the even equalling pg.quit is when
-        # the user has entered that X button on the top
-        # corner! 
+        elapsed_time = t.time() - start_time
         for event in pg.event.get():
             if event.type == pg.QUIT:
                 run = False
                 break
 
-        # now we display the background
-        draw(player)
-        
-        # now to move the rectangle, we
-        # just set the X coordinate of player
-        # to adjust as necessary
-        keys = pg.key.get_pressed()
+        # check cows and shots
+        cowChecker(cowz, player, shots)
 
-        # if they press the left or right
-        # button, we can figure that out
-        # and then move the character accordingly
+        if hit:
+            lost_text = font.render("You got Mooed", 1, "white")
+            window.blit(lost_text, (width/2 - lost_text.get_width()/2, height/2 - lost_text.get_height()/2))
+            pg.display.update()
+            pg.time.delay(2000)
+            break
+
+        draw(player, elapsed_time, cowz, shots)
+
+        # player movement
+        keys = pg.key.get_pressed()
         if keys[pg.K_LEFT] and player.x - playerVel >= 0:
             player.x -= playerVel
-        elif keys[pg.K_RIGHT] and player.x + playerVel + player.width <= width:
+        if keys[pg.K_RIGHT] and player.x + playerVel + player.width <= width:
             player.x += playerVel
-    
+        if keys[pg.K_DOWN] and player.y + playerVel + player.height <= height:
+            player.y += playerVel
+        if keys[pg.K_UP] and player.y - playerVel >= 0:
+            player.y -= playerVel
+        if keys[pg.K_a]:
+            spawnShot(player, shots)
 
-    # once we've broken out of the loop, 
-    # the game is over.
+        shotChecker(shots)
+
     pg.quit()
 
-# so now that we have made the main function
-# we need to make it available to be called.
+# main function call
 if __name__ == "__main__":
     main()
