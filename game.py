@@ -69,7 +69,7 @@ def draw(player, elapsed_time, cowz, shots, meatz, score):
 def cowChecker(cowz, player, shots, meatz):
     global hit
     cows_to_remove = []
-    shots_to_remove = []
+    shots_to_remove = []  # Create a list to keep track of shots to remove
 
     for moo in cowz:
         moo.y += moo_vel  # Move the cow down the screen
@@ -90,17 +90,18 @@ def cowChecker(cowz, player, shots, meatz):
         for shot in shots:
             if shot.colliderect(moo):
                 cows_to_remove.append(moo)
-                shots_to_remove.append(shot)
+                shots_to_remove.append(shot)  # Mark the shot for removal
 
     # Remove cows and shots after iteration to avoid modifying lists during iteration
     for moo in cows_to_remove:
         if moo in cowz:
-            meatDrop(moo, meatz)
+            meatDrop(moo, meatz)  # Ensure meatz is passed in here
             cowz.remove(moo)
 
     for shot in shots_to_remove:
         if shot in shots:
-            shots.remove(shot)
+            shots.remove(shot)  # Remove the shot
+
 
 
 def meatDrop(moo, meatz) :
