@@ -16,14 +16,20 @@ moo_vel = 3
 shot_vel = 3
 
 # dimensions for the cows and shots
-cow_height = 40
-cow_width = 40
+cow_height = 80
+cow_width = 80
 shot_h = 15
 shot_w = 10
+meat_h = 25
+meat_w = 25
 
-# loading the images
-cow = pg.image.load("goodyCow.jpg")
+# loading the images with transparency support
+cow = pg.image.load("goodyCow.png").convert_alpha()  # Use .convert_alpha() for transparency
 cow = pg.transform.scale(cow, (cow_width, cow_height))
+
+meat = pg.image.load("transMeat.png").convert_alpha()  # Use .convert_alpha() for transparency
+meat = pg.transform.scale(meat, (meat_h, meat_w))
+
 
 BG = pg.image.load("goodGrass.jpg")
 BG = pg.transform.scale(BG, (width, height))
@@ -42,21 +48,25 @@ global hit
 hit = False
 
 # draw function remains unchanged
-def draw(player, elapsed_time, cowz, shots):
+def draw(player, elapsed_time, cowz, shots, meatz, score):
     window.blit(BG, (0, 0))
     t_text = font.render(f"Time: {round(elapsed_time)}s", 1, "white")
     window.blit(t_text, (10, 10))
     window.blit(tract, (player.x, player.y))
+    score_t = font.render(f"Score: {score}", 1, "white")
+    window.blit(score_t, (10, 40))
 
     # drawing cows and shots
     for moo in cowz:
         window.blit(cow, (moo.x, moo.y))
     for shot in shots:
         pg.draw.rect(window, "black", shot)
+    for meaty in meatz:
+        window.blit(meat, (meaty.x, meaty.y))
 
     pg.display.update()
 
-def cowChecker(cowz, player, shots):
+def cowChecker(cowz, player, shots, meatz):
     global hit
     cows_to_remove = []
     shots_to_remove = []
@@ -85,11 +95,18 @@ def cowChecker(cowz, player, shots):
     # Remove cows and shots after iteration to avoid modifying lists during iteration
     for moo in cows_to_remove:
         if moo in cowz:
+            meatDrop(moo, meatz)
             cowz.remove(moo)
 
     for shot in shots_to_remove:
         if shot in shots:
             shots.remove(shot)
+
+
+def meatDrop(moo, meatz) :
+    meaty = pg.Rect(moo.x, moo.y, meat_w, meat_h)
+    meatz.append(meaty)
+
 
 # UPDATED spawnShot to correctly place bullets
 def spawnShot(player, shots):
@@ -104,6 +121,14 @@ def shotChecker(shots):
         if shot.y < 0:  # Remove the shot if it goes off the top of the screen
             shots.remove(shot)
 
+def meatChecker(player, meatz, score):
+    for meaty in meatz[:]:  # Copy the list to avoid modification issues
+        if player.colliderect(meaty):  # Player touches the meat
+            meatz.remove(meaty)  # Remove the meat
+            score += 100
+    return score
+
+
 
 # main loop
 def main():
@@ -116,6 +141,8 @@ def main():
     cow_count = 0
     cowz = []
     shots = []
+    meatz = []
+    score = 0
     run = True
 
     while run:
@@ -135,7 +162,10 @@ def main():
                 break
 
         # check cows and shots
-        cowChecker(cowz, player, shots)
+        cowChecker(cowz, player, shots, meatz)
+
+        # checking if the player got some meat
+        score = meatChecker(player, meatz, score)
 
         if hit:
             lost_text = font.render("You got Mooed", 1, "white")
@@ -144,7 +174,7 @@ def main():
             pg.time.delay(2000)
             break
 
-        draw(player, elapsed_time, cowz, shots)
+        draw(player, elapsed_time, cowz, shots, meatz, score)
 
         # player movement
         keys = pg.key.get_pressed()
